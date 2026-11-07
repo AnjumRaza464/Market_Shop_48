@@ -62,7 +62,7 @@ npm run dev          # http://localhost:3000
 | `npm run db:migrate`  | Apply pending migrations to `DATABASE_URL`                          |
 | `npm run db:push`     | Push the schema directly (prototyping only; prefer migrations)      |
 | `npm run db:studio`   | Browse the database with Drizzle Studio                             |
-| `npm run db:seed`     | Seed demo data for empty modules (`-- --force` wipes everything; `-- --reset-customers` / `-- --reset-partners` wipe one module) |
+| `npm run db:seed`     | Seed demo data for empty modules (`-- --force` wipes everything and re-seeds; `-- --wipe` empties every table without demo data; `-- --reset-customers` / `-- --reset-partners` wipe one module) |
 | `npm run db:verify`   | Read-only integrity audit of the live database (bill math, ledger postings, customer balances) |
 
 ### Environment variables

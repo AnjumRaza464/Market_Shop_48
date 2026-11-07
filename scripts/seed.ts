@@ -5,6 +5,7 @@
  *   npm run db:seed -- --force            → wipes ALL tables and re-seeds everything
  *   npm run db:seed -- --reset-customers  → wipes only customers + sale entries, re-seeds them
  *   npm run db:seed -- --reset-partners   → wipes only partners (expenses keep their rows, paid_by → shop)
+ *   npm run db:seed -- --wipe             → wipes ALL tables and seeds NOTHING (start real entry from zero)
  *
  * Supplier side: 8 parties, ~11 months of bills (Jan–Nov 2026) with line items, payments, advances.
  * Customer side: 10 customers with goods-given / cash-received rows (Khaata sheet style).
@@ -426,8 +427,27 @@ async function seedPartners(tx: Tx) {
 async function main() {
   const args = process.argv.slice(2);
   const force = args.includes("--force");
+  const wipe = args.includes("--wipe");
   const resetCustomers = args.includes("--reset-customers");
   const resetPartners = args.includes("--reset-partners");
+
+  if (wipe) {
+    console.log("Wiping ALL data (no demo data will be inserted)…");
+    await db.execute(
+      sql`TRUNCATE TABLE bill_items, party_transactions, bills, sale_entries, customers, shop_expenses, partners, parties RESTART IDENTITY CASCADE`,
+    );
+    const counts = await db.execute(sql`
+      select (select count(*) from parties)::int as parties,
+             (select count(*) from bills)::int as bills,
+             (select count(*) from customers)::int as customers,
+             (select count(*) from sale_entries)::int as entries,
+             (select count(*) from shop_expenses)::int as expenses,
+             (select count(*) from partners)::int as partners
+    `);
+    console.log("Row counts after wipe:", counts.rows[0]);
+    console.log("Database is empty. Start entering your real parties, customers and expenses.");
+    process.exit(0);
+  }
 
   await db.transaction(async (tx) => {
     if (force) {
