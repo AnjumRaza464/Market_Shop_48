@@ -35,7 +35,7 @@ npm install
 # 2. Configure environment
 cp .env.example .env
 #    → paste your Neon *pooled* connection string into DATABASE_URL
-#    → (optional) set APP_PASSWORD + AUTH_SECRET to enable the login screen
+#    → login defaults to admin / 123123 – set APP_USERNAME, APP_PASSWORD and AUTH_SECRET to change it
 
 # 3. Create the tables in Neon (runs drizzle/0000_*.sql and records it)
 npm run db:migrate
@@ -70,8 +70,9 @@ npm run dev          # http://localhost:3000
 | Variable                      | Required | Purpose                                                                 |
 | ----------------------------- | -------- | ----------------------------------------------------------------------- |
 | `DATABASE_URL`                | yes      | Neon connection string (pooled host, `sslmode=require`)                 |
-| `APP_PASSWORD`                | no       | Enables the single-password login for the whole app                     |
-| `AUTH_SECRET`                 | if above | ≥16 random chars; signs the session cookie (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) |
+| `APP_USERNAME`                | no       | Login username (default `admin`)                                        |
+| `APP_PASSWORD`                | no       | Login password (default `123123`) – change before going live            |
+| `AUTH_SECRET`                 | no       | ≥16 random chars (falls back to a derived secret with a warning); signs the session cookie (`node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`) |
 | `NEXT_PUBLIC_SHOP_NAME`       | no       | Printed on pattis, statements and the sidebar                           |
 | `NEXT_PUBLIC_SHOP_ADDRESS`    | no       | Printed on pattis and statements                                        |
 | `NEXT_PUBLIC_SHOP_PHONE`      | no       | Printed on pattis and statements                                        |
@@ -224,7 +225,7 @@ app/
     partners/                partner list + add · [id]/edit
     reports/                 profit & loss · parties (supplier summary) · sales (dues, day/month/year) · expenses
   (print)/print/             printable patti, supplier statement and customer khata (no sidebar)
-  login/                     password screen (only when APP_PASSWORD is set)
+  login/                     sign-in screen (username + password, default admin / 123123)
 components/
   ui/                        buttons, inputs, cards, tables, badges, stat tiles, confirm button…
   forms/                     bill form (live totals, keyboard flow), party, customer, sale entry, transaction, expense, partner
@@ -240,7 +241,7 @@ lib/
   queries/                   read models (server-only)
   actions/                   Server Actions (mutations)
   auth.ts                    HMAC session cookie helpers
-proxy.ts                     route gate (login) when APP_PASSWORD is set
+proxy.ts                     route gate – every page needs a valid session cookie
 scripts/seed.ts              demo data generator (module-wise, additive)
 scripts/verify.ts            read-only database integrity audit (npm run db:verify)
 tests/                       Vitest unit tests

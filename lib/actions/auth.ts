@@ -2,7 +2,13 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSessionToken, isAuthEnabled, SESSION_COOKIE, SESSION_MAX_AGE_SECONDS, verifyPassword } from "@/lib/auth";
+import {
+  createSessionToken,
+  SESSION_COOKIE,
+  SESSION_MAX_AGE_SECONDS,
+  SHORT_SESSION_SECONDS,
+  verifyCredentials,
+} from "@/lib/auth";
 import { errorState, type ActionState } from "./types";
 
 function safeNextPath(value: FormDataEntryValue | null): string {
@@ -12,18 +18,26 @@ function safeNextPath(value: FormDataEntryValue | null): string {
 }
 
 export async function login(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  if (!isAuthEnabled()) redirect("/");
+  const username = String(formData.get("username") ?? "").trim();
   const password = String(formData.get("password") ?? "");
-  if (!password) return errorState("Enter the password.");
-  if (!(await verifyPassword(password))) return errorState("Incorrect password. Please try again.");
+  const remember = formData.get("remember") === "on";
 
-  const token = await createSessionToken();
+  if (!username && !password) return errorState("Enter your username and password.");
+  if (!username) return errorState("Enter your username.");
+  if (!password) return errorState("Enter your password.");
+  if (!(await verifyCredentials(username, password))) {
+    return errorState("Incorrect username or password. Please try again.");
+  }
+
+  const maxAge = remember ? SESSION_MAX_AGE_SECONDS : SHORT_SESSION_SECONDS;
+  const token = await createSessionToken(maxAge);
   (await cookies()).set(SESSION_COOKIE, token, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    maxAge: SESSION_MAX_AGE_SECONDS,
+    // Remembered sessions persist for 30 days; otherwise the cookie dies with the browser.
+    ...(remember ? { maxAge } : {}),
   });
   redirect(safeNextPath(formData.get("next")));
 }

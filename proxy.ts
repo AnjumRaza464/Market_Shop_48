@@ -2,8 +2,8 @@ import { NextResponse, type NextRequest } from "next/server";
 import { isAuthEnabled, SESSION_COOKIE, verifySessionToken } from "@/lib/auth";
 
 /**
- * Route gate. When APP_PASSWORD is configured every page (and every Server Action POST)
- * requires a valid signed session cookie; otherwise the app is open (local development).
+ * Route gate. Every page (and every Server Action POST) requires a valid signed session
+ * cookie issued by the /login form (APP_USERNAME / APP_PASSWORD, default admin / 123123).
  */
 export async function proxy(request: NextRequest) {
   if (!isAuthEnabled()) return NextResponse.next();

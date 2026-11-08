@@ -1,0 +1,585 @@
+/* Sign-in scene for Market 48 Shop. Scoped under .m48-login so the app theme is untouched. */
+
+.m48-login {
+  --m48-bg: #050d08;
+  --m48-bg-2: #0a1a10;
+  --m48-ink: #f1f7f2;
+  --m48-ink-muted: #9fb3a6;
+  --m48-ink-faint: #5f7567;
+  --m48-line: rgba(160, 220, 180, 0.14);
+  --m48-green: #34d399;
+  --m48-green-deep: #10b981;
+  --m48-amber: #fbbf24;
+  --m48-amber-deep: #f59e0b;
+  --m48-red: #fb7185;
+  --m48-card: rgba(10, 28, 18, 0.62);
+  --m48-card-strong: rgba(12, 32, 21, 0.86);
+
+  color: var(--m48-ink);
+  background:
+    radial-gradient(1100px 620px at 12% -10%, rgba(16, 185, 129, 0.28), transparent 60%),
+    radial-gradient(900px 560px at 92% 8%, rgba(245, 158, 11, 0.2), transparent 60%),
+    radial-gradient(700px 500px at 60% 110%, rgba(52, 211, 153, 0.16), transparent 60%),
+    linear-gradient(180deg, var(--m48-bg-2) 0%, var(--m48-bg) 100%);
+  color-scheme: dark;
+}
+
+.m48-login ::selection {
+  background: rgba(52, 211, 153, 0.35);
+}
+
+/* ---------- atmosphere ---------- */
+
+.m48-stars {
+  background-image:
+    radial-gradient(1px 1px at 20% 30%, rgba(255, 255, 255, 0.55) 50%, transparent 51%),
+    radial-gradient(1px 1px at 70% 20%, rgba(255, 255, 255, 0.4) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 40% 70%, rgba(255, 255, 255, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 85% 60%, rgba(255, 255, 255, 0.45) 50%, transparent 51%),
+    radial-gradient(1px 1px at 55% 45%, rgba(255, 255, 255, 0.3) 50%, transparent 51%),
+    radial-gradient(1.5px 1.5px at 10% 80%, rgba(255, 255, 255, 0.35) 50%, transparent 51%),
+    radial-gradient(1px 1px at 30% 10%, rgba(255, 255, 255, 0.4) 50%, transparent 51%),
+    radial-gradient(1px 1px at 92% 35%, rgba(255, 255, 255, 0.35) 50%, transparent 51%);
+  opacity: 0.6;
+  animation: m48-twinkle 9s ease-in-out infinite alternate;
+}
+
+.m48-grid-floor {
+  position: absolute;
+  inset: auto -20% -12% -20%;
+  height: 58%;
+  background-image:
+    linear-gradient(rgba(52, 211, 153, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(52, 211, 153, 0.22) 1px, transparent 1px);
+  background-size: 64px 64px;
+  transform: perspective(900px) rotateX(64deg);
+  transform-origin: top center;
+  mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 30%, #000 70%, transparent 100%);
+  animation: m48-floor 14s linear infinite;
+  opacity: 0.55;
+}
+
+.m48-orb {
+  position: absolute;
+  border-radius: 9999px;
+  filter: blur(70px);
+  opacity: 0.55;
+  animation: m48-drift 18s ease-in-out infinite alternate;
+}
+
+.m48-ring {
+  position: absolute;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(52, 211, 153, 0.35);
+  box-shadow:
+    0 0 40px rgba(52, 211, 153, 0.25),
+    inset 0 0 40px rgba(52, 211, 153, 0.12);
+  animation: m48-spin 26s linear infinite;
+}
+.m48-ring::after {
+  content: "";
+  position: absolute;
+  top: -5px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 9999px;
+  background: var(--m48-amber);
+  box-shadow: 0 0 18px var(--m48-amber);
+}
+
+/* ---------- typography ---------- */
+
+.m48-gradient-text {
+  background: linear-gradient(92deg, #a7f3d0 0%, #34d399 45%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.m48-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--m48-line);
+  background: rgba(8, 24, 15, 0.6);
+  padding: 0.4rem 0.9rem;
+  font-size: 0.8rem;
+  color: var(--m48-ink-muted);
+  backdrop-filter: blur(10px);
+}
+
+.m48-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 9999px;
+  background: var(--m48-green);
+  box-shadow: 0 0 12px var(--m48-green);
+  animation: m48-pulse 2.4s ease-in-out infinite;
+}
+
+/* ---------- surfaces ---------- */
+
+.m48-glass {
+  position: relative;
+  border: 1px solid var(--m48-line);
+  background: var(--m48-card);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow:
+    0 30px 80px -30px rgba(0, 0, 0, 0.7),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.m48-feature {
+  transition:
+    transform 0.35s cubic-bezier(0.2, 0.8, 0.2, 1),
+    border-color 0.35s,
+    background 0.35s;
+}
+.m48-feature:hover {
+  transform: translateY(-4px);
+  border-color: rgba(52, 211, 153, 0.4);
+  background: rgba(12, 36, 23, 0.78);
+}
+.m48-feature:hover .m48-feature-icon {
+  box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.5), 0 10px 30px -10px rgba(52, 211, 153, 0.7);
+}
+.m48-feature-icon {
+  transition: box-shadow 0.35s;
+}
+
+.m48-panel {
+  border: 1px solid rgba(160, 220, 180, 0.18);
+  background: linear-gradient(160deg, rgba(14, 40, 26, 0.9), rgba(6, 18, 11, 0.92));
+  box-shadow:
+    0 40px 100px -30px rgba(0, 0, 0, 0.85),
+    0 0 0 1px rgba(255, 255, 255, 0.02) inset,
+    0 0 120px -40px rgba(52, 211, 153, 0.35);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.m48-panel::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(140deg, rgba(52, 211, 153, 0.55), transparent 35%, transparent 65%, rgba(251, 191, 36, 0.45));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.m48-logo {
+  background: linear-gradient(145deg, #34d399, #059669);
+  box-shadow:
+    0 12px 30px -10px rgba(16, 185, 129, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.35);
+}
+
+/* ---------- form ---------- */
+
+.m48-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(160, 220, 180, 0.16);
+  background: rgba(4, 14, 8, 0.65);
+  transition:
+    border-color 0.25s,
+    box-shadow 0.25s,
+    background 0.25s;
+}
+.m48-input-wrap:focus-within {
+  border-color: rgba(52, 211, 153, 0.75);
+  background: rgba(6, 20, 12, 0.85);
+  box-shadow:
+    0 0 0 4px rgba(52, 211, 153, 0.14),
+    0 10px 30px -15px rgba(52, 211, 153, 0.6);
+}
+.m48-input-wrap[data-invalid="true"] {
+  border-color: rgba(251, 113, 133, 0.6);
+}
+.m48-input {
+  height: 3.1rem;
+  width: 100%;
+  min-width: 0;
+  background: transparent;
+  color: var(--m48-ink);
+  font-size: 0.95rem;
+  outline: none;
+  padding: 0 0.75rem 0 2.9rem;
+}
+.m48-input::placeholder {
+  color: var(--m48-ink-faint);
+}
+.m48-input:-webkit-autofill,
+.m48-input:-webkit-autofill:hover,
+.m48-input:-webkit-autofill:focus {
+  -webkit-text-fill-color: var(--m48-ink);
+  -webkit-box-shadow: 0 0 0 1000px #0a1c11 inset;
+  transition: background-color 9999s ease-out;
+}
+.m48-input-icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--m48-ink-faint);
+  pointer-events: none;
+  transition: color 0.25s;
+}
+.m48-input-wrap:focus-within .m48-input-icon {
+  color: var(--m48-green);
+}
+.m48-eye {
+  position: absolute;
+  right: 0.5rem;
+  display: inline-flex;
+  height: 2.2rem;
+  width: 2.2rem;
+  align-items: center;
+  justify-content: center;
+  border-radius: 0.6rem;
+  color: var(--m48-ink-faint);
+  transition:
+    color 0.2s,
+    background 0.2s;
+}
+.m48-eye:hover {
+  color: var(--m48-ink);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.m48-check {
+  appearance: none;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 0.35rem;
+  border: 1px solid rgba(160, 220, 180, 0.3);
+  background: rgba(4, 14, 8, 0.7);
+  display: inline-grid;
+  place-content: center;
+  cursor: pointer;
+  transition:
+    background 0.2s,
+    border-color 0.2s;
+}
+.m48-check::before {
+  content: "";
+  width: 0.6rem;
+  height: 0.6rem;
+  transform: scale(0);
+  transition: transform 0.15s ease-in-out;
+  background: #052e1c;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+.m48-check:checked {
+  background: var(--m48-green);
+  border-color: var(--m48-green);
+}
+.m48-check:checked::before {
+  transform: scale(1);
+}
+.m48-check:focus-visible {
+  outline: 2px solid rgba(52, 211, 153, 0.6);
+  outline-offset: 2px;
+}
+
+.m48-submit {
+  position: relative;
+  overflow: hidden;
+  height: 3.1rem;
+  border-radius: 0.85rem;
+  color: #04150c;
+  font-weight: 600;
+  font-size: 0.95rem;
+  background: linear-gradient(92deg, #6ee7b7 0%, #34d399 40%, #fbbf24 100%);
+  box-shadow:
+    0 18px 40px -16px rgba(52, 211, 153, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s,
+    filter 0.2s;
+}
+.m48-submit:hover:not(:disabled) {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow:
+    0 22px 50px -16px rgba(52, 211, 153, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.45);
+}
+.m48-submit:active:not(:disabled) {
+  transform: translateY(0);
+}
+.m48-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+.m48-submit::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.5), transparent);
+  transform: skewX(-20deg);
+  animation: m48-shine 4.5s ease-in-out infinite;
+}
+.m48-submit:focus-visible {
+  outline: 2px solid #fbbf24;
+  outline-offset: 3px;
+}
+
+.m48-error {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(251, 113, 133, 0.35);
+  background: rgba(251, 113, 133, 0.1);
+  color: #fecdd3;
+  padding: 0.6rem 0.8rem;
+  font-size: 0.85rem;
+  animation: m48-shake 0.4s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* ---------- floating scene ---------- */
+
+.m48-scene {
+  perspective: 1400px;
+}
+.m48-scene-card {
+  position: absolute;
+  border-radius: 1rem;
+  border: 1px solid rgba(160, 220, 180, 0.2);
+  background: linear-gradient(160deg, rgba(16, 44, 29, 0.92), rgba(8, 22, 14, 0.96));
+  box-shadow:
+    0 30px 60px -20px rgba(0, 0, 0, 0.8),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+.m48-scene-card.is-a {
+  animation: m48-float-a 7s ease-in-out infinite;
+}
+.m48-scene-card.is-b {
+  animation: m48-float-b 8.5s ease-in-out infinite;
+}
+.m48-scene-card.is-c {
+  animation: m48-float-c 6.5s ease-in-out infinite;
+}
+.m48-scene-card.is-d {
+  animation: m48-float-d 9s ease-in-out infinite;
+}
+.m48-scene-card.is-amber {
+  border-color: rgba(251, 191, 36, 0.35);
+  background: linear-gradient(160deg, rgba(70, 44, 8, 0.95), rgba(28, 18, 4, 0.97));
+}
+
+.m48-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  font-size: 0.72rem;
+  color: var(--m48-ink-muted);
+  padding: 0.3rem 0;
+  border-bottom: 1px dashed rgba(160, 220, 180, 0.12);
+}
+.m48-row:last-child {
+  border-bottom: 0;
+}
+.m48-row strong {
+  color: var(--m48-ink);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.m48-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  height: 64px;
+}
+.m48-bar {
+  flex: 1;
+  border-radius: 4px 4px 2px 2px;
+  background: linear-gradient(180deg, #34d399, rgba(52, 211, 153, 0.35));
+  transform-origin: bottom;
+  animation: m48-grow 1.2s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.m48-bar.is-amber {
+  background: linear-gradient(180deg, #fbbf24, rgba(251, 191, 36, 0.35));
+}
+
+.m48-ticker {
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+.m48-ticker-track {
+  display: flex;
+  gap: 2.5rem;
+  width: max-content;
+  animation: m48-ticker 38s linear infinite;
+}
+.m48-ticker:hover .m48-ticker-track {
+  animation-play-state: paused;
+}
+
+.m48-enter {
+  animation: m48-rise 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+/* ---------- keyframes ---------- */
+
+@keyframes m48-twinkle {
+  from {
+    opacity: 0.35;
+  }
+  to {
+    opacity: 0.75;
+  }
+}
+@keyframes m48-floor {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 0 64px;
+  }
+}
+@keyframes m48-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(40px, -30px, 0) scale(1.12);
+  }
+}
+@keyframes m48-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes m48-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(52, 211, 153, 0.6);
+  }
+  60% {
+    box-shadow: 0 0 0 7px rgba(52, 211, 153, 0);
+  }
+}
+@keyframes m48-shine {
+  0% {
+    left: -60%;
+  }
+  35%,
+  100% {
+    left: 130%;
+  }
+}
+@keyframes m48-shake {
+  10%,
+  90% {
+    transform: translateX(-1px);
+  }
+  20%,
+  80% {
+    transform: translateX(2px);
+  }
+  30%,
+  50%,
+  70% {
+    transform: translateX(-3px);
+  }
+  40%,
+  60% {
+    transform: translateX(3px);
+  }
+}
+@keyframes m48-float-a {
+  0%,
+  100% {
+    transform: rotateY(-16deg) rotateX(8deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotateY(-16deg) rotateX(8deg) translate3d(0, -14px, 10px);
+  }
+}
+@keyframes m48-float-b {
+  0%,
+  100% {
+    transform: rotateY(-14deg) rotateX(6deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotateY(-14deg) rotateX(6deg) translate3d(0, 12px, 6px);
+  }
+}
+@keyframes m48-float-c {
+  0%,
+  100% {
+    transform: rotateY(-18deg) rotateX(10deg) rotateZ(-2deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotateY(-18deg) rotateX(10deg) rotateZ(-2deg) translate3d(0, -10px, 0);
+  }
+}
+@keyframes m48-float-d {
+  0%,
+  100% {
+    transform: rotateY(-12deg) rotateZ(-6deg) translate3d(0, 0, 0);
+  }
+  50% {
+    transform: rotateY(-12deg) rotateZ(-6deg) translate3d(6px, -16px, 0);
+  }
+}
+@keyframes m48-grow {
+  from {
+    transform: scaleY(0);
+    opacity: 0;
+  }
+  to {
+    transform: scaleY(1);
+    opacity: 1;
+  }
+}
+@keyframes m48-ticker {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+@keyframes m48-rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .m48-login *,
+  .m48-login *::before,
+  .m48-login *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
