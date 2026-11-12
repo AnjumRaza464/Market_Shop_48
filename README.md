@@ -112,6 +112,7 @@ npm run dev          # http://localhost:3000
 |                                               | Summary / Monthly          | Sales & Dues report (`/reports/sales`) – outstanding, top dues, day report, month-wise, year-wise, customer-wise period, item-wise |
 | Shop Expense Sheet                            | Daily Expenses             | Shop Expenses (`/expenses`) – category, amount, paid by (partner / cash box), mode, notes |
 | –                                             | Cash book (roznamcha)      | Cash in Hand (`/cash`) – running balance per account, period in/out by source, manual opening / deposit / withdrawal / transfer |
+| –                                             | Whole workbook             | Excel Backup (`/export`) – one formatted .xlsx with every module on its own sheet, built fresh on each download |
 |                                               | Monthly / Month-wise / Year-wise | Expenses page (period filters, totals, daily average, biggest category) + Expense Reports (`/reports/expenses`) |
 |                                               | Settings → Partners        | Partners (`/partners`) with share %; Partner settlement on expenses page and expense report |
 
@@ -185,6 +186,16 @@ the page also shows “Bank & digital” and a per-account breakdown. A **Transf
 out of one account and into another (e.g. cash deposited at the bank). Start by recording an
 **Opening cash** entry so the balance matches the physical cash box; expenses a partner paid from
 their own pocket do not touch the shop's cash.
+
+### Excel backup (`/export`)
+
+`GET /export/download` streams the whole database as one `.xlsx` built with **exceljs**
+(`lib/export/workbook.ts`): a Summary sheet (cash position, payables, dues, row counts) followed by
+Suppliers, Bills (Pattis), Bill Items, Supplier Ledger, Customers, Customer Khata, Shop Expenses,
+Partners, Cash Book and Cash Entries. Money, quantities and dates are real Excel values with number
+formats, headers are frozen with auto-filter, alternate rows are banded, and every money column
+ends in a `SUM()` total row. The ledger sheets carry a running balance per party / customer that
+starts from the opening balance. Nothing is cached – each download reflects the books at that moment.
 
 ### Profit & loss
 

@@ -7,6 +7,7 @@ import {
   Banknote,
   ChartColumn,
   ClipboardList,
+  FileSpreadsheet,
   HandCoins,
   LayoutDashboard,
   LogOut,
@@ -67,6 +68,7 @@ const NAV: { heading?: string; items: NavItem[] }[] = [
       { href: "/reports/parties", label: "Supplier Summary", icon: Store },
       { href: "/reports/sales", label: "Sales & Dues", icon: TrendingUp },
       { href: "/reports/expenses", label: "Expense Reports", icon: ClipboardList },
+      { href: "/export", label: "Excel Backup", icon: FileSpreadsheet, match: ["/export"] },
     ],
   },
 ];

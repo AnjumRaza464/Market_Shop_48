@@ -58,6 +58,8 @@ export interface CashBookFilters {
   mode?: PaymentMode;
   source?: CashSource;
   page?: number;
+  /** Rows per page (defaults to PAGE_SIZE; the Excel export passes a very large number to get everything). */
+  pageSize?: number;
 }
 
 function conditions(f: Omit<CashBookFilters, "page">): SQL {
@@ -221,6 +223,7 @@ export interface CashBookResult {
 /** Chronological cash book with a running balance (opening = balance before `from`). */
 export async function listCashBook(filters: CashBookFilters = {}): Promise<CashBookResult> {
   const page = Math.max(1, filters.page ?? 1);
+  const pageSize = Math.max(1, filters.pageSize ?? PAGE_SIZE);
   const where = conditions(filters);
   const openingWhere = sql`${conditions({ mode: filters.mode, source: filters.source })} and ${filters.from ? sql`m.d < ${filters.from}::date` : sql`false`}`;
 
@@ -245,7 +248,7 @@ export async function listCashBook(filters: CashBookFilters = {}): Promise<CashB
              r.who, r.who_id, r.bill_id, r.note, r.cum::text as cum
         from running r
        order by r.d, r.seq, r.source_id
-       limit ${PAGE_SIZE} offset ${(page - 1) * PAGE_SIZE}
+       limit ${pageSize} offset ${(page - 1) * pageSize}
     `),
   ]);
 
@@ -269,7 +272,7 @@ export async function listCashBook(filters: CashBookFilters = {}): Promise<CashB
     })),
     total: Number(totalsRow?.n ?? 0),
     page,
-    pageSize: PAGE_SIZE,
+    pageSize,
     opening: toMoneyString(opening),
     totals: { cashIn: toMoneyString(cashIn), cashOut: toMoneyString(cashOut) },
     closing: toMoneyString(opening.plus(cashIn).minus(cashOut)),
