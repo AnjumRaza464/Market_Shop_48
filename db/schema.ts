@@ -46,6 +46,15 @@ export const transactionTypeEnum = pgEnum("transaction_type", [
 ]);
 /** New values are appended (never reordered) so migrations stay additive. */
 export const paymentModeEnum = pgEnum("payment_mode", ["CASH", "BANK", "JAZZCASH", "EASYPAISA", "CHEQUE", "OTHER"]);
+/** Manual cash-box entries (everything else in the cash book is derived from the khatas and expenses). */
+export const cashEntryTypeEnum = pgEnum("cash_entry_type", [
+  "OPENING", // IN: cash counted when the cash book was started
+  "DEPOSIT", // IN: owner / partner put money into the shop
+  "WITHDRAWAL", // OUT: owner / partner took money out of the shop
+  "TRANSFER", // OUT of `payment_mode`, IN to `to_mode` (e.g. cash deposited into the bank)
+  "ADJUSTMENT", // either side: counting difference / correction
+]);
+export const cashDirectionEnum = pgEnum("cash_direction", ["IN", "OUT"]);
 export const expenseCategoryEnum = pgEnum("expense_category", [
   "RENT",
   "ELECTRICITY",
@@ -296,6 +305,47 @@ export const shopExpenses = pgTable(
   ],
 );
 
+/**
+ * Cash book. The running "cash in hand" is NOT stored – it is derived:
+ *
+ *   cash in hand = Σ IN − Σ OUT over
+ *     + sale_entries.received                       (cash received from customers)
+ *     + party_transactions RECEIPT credits          (money received from a supplier)
+ *     − party_transactions PAYMENT/ADVANCE debits   (money paid / advanced to a supplier)
+ *     − shop_expenses paid from the shop cash box   (paid_by_partner_id IS NULL)
+ *     ± cash_entries                                (this table: opening, deposits, withdrawals, …)
+ *
+ * grouped by payment mode, so "cash in hand" is the CASH mode and bank / wallets are tracked
+ * separately. A TRANSFER row moves money out of `payment_mode` and into `to_mode`.
+ */
+export const cashEntries = pgTable(
+  "cash_entries",
+  {
+    id: integer("id").primaryKey().generatedAlwaysAsIdentity(),
+    entryDate: date("entry_date", { mode: "string" }).notNull(),
+    type: cashEntryTypeEnum("type").notNull(),
+    direction: cashDirectionEnum("direction").notNull(),
+    amount: money("amount").notNull(),
+    /** The account the money moved in/out of (source account for a TRANSFER). */
+    paymentMode: paymentModeEnum("payment_mode").notNull().default("CASH"),
+    /** Destination account – only for TRANSFER. */
+    toMode: paymentModeEnum("to_mode"),
+    /** Partner who deposited / withdrew the money (optional). */
+    partnerId: integer("partner_id").references(() => partners.id, { onDelete: "set null" }),
+    notes: text("notes"),
+    ...timestamps,
+  },
+  (t) => [
+    index("cash_entries_date_idx").on(t.entryDate),
+    index("cash_entries_type_idx").on(t.type),
+    check("cash_entries_amount_positive", sql`${t.amount} > 0`),
+    check(
+      "cash_entries_transfer_modes",
+      sql`(${t.type} = 'TRANSFER' AND ${t.toMode} IS NOT NULL AND ${t.toMode} <> ${t.paymentMode}) OR (${t.type} <> 'TRANSFER' AND ${t.toMode} IS NULL)`,
+    ),
+  ],
+);
+
 // ---------- Relations ----------
 export const partiesRelations = relations(parties, ({ many }) => ({
   bills: many(bills),
@@ -333,6 +383,10 @@ export const shopExpensesRelations = relations(shopExpenses, ({ one }) => ({
   paidBy: one(partners, { fields: [shopExpenses.paidByPartnerId], references: [partners.id] }),
 }));
 
+export const cashEntriesRelations = relations(cashEntries, ({ one }) => ({
+  partner: one(partners, { fields: [cashEntries.partnerId], references: [partners.id] }),
+}));
+
 // ---------- Types ----------
 export type Party = typeof parties.$inferSelect;
 export type NewParty = typeof parties.$inferInsert;
@@ -350,9 +404,13 @@ export type Partner = typeof partners.$inferSelect;
 export type NewPartner = typeof partners.$inferInsert;
 export type ShopExpense = typeof shopExpenses.$inferSelect;
 export type NewShopExpense = typeof shopExpenses.$inferInsert;
+export type CashEntry = typeof cashEntries.$inferSelect;
+export type NewCashEntry = typeof cashEntries.$inferInsert;
 
 export type PartyStatus = (typeof partyStatusEnum.enumValues)[number];
 export type BillStatus = (typeof billStatusEnum.enumValues)[number];
 export type TransactionType = (typeof transactionTypeEnum.enumValues)[number];
 export type PaymentMode = (typeof paymentModeEnum.enumValues)[number];
 export type ExpenseCategory = (typeof expenseCategoryEnum.enumValues)[number];
+export type CashEntryType = (typeof cashEntryTypeEnum.enumValues)[number];
+export type CashDirection = (typeof cashDirectionEnum.enumValues)[number];

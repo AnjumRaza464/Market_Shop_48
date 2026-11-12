@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense, useState } from "react";
 import {
+  Banknote,
   ChartColumn,
   ClipboardList,
   HandCoins,
@@ -54,6 +55,7 @@ const NAV: { heading?: string; items: NavItem[] }[] = [
   {
     heading: "Shop",
     items: [
+      { href: "/cash", label: "Cash in Hand", icon: Banknote, match: ["/cash"] },
       { href: "/expenses", label: "Shop Expenses", icon: Wallet, match: ["/expenses"] },
       { href: "/partners", label: "Partners", icon: UsersRound, match: ["/partners"] },
     ],

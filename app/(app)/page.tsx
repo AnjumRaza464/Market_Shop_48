@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Banknote, HandCoins, Percent, Plus, ReceiptText, ShoppingBag, TrendingUp, Users, Wallet } from "lucide-react";
+import { ArrowDownLeft, ArrowRight, ArrowUpRight, Banknote, HandCoins, Landmark, Percent, Plus, ReceiptText, ShoppingBag, TrendingUp, Users, Wallet } from "lucide-react";
 import { Suspense } from "react";
 import { BarChart } from "@/components/charts/bar-chart";
 import { PeriodLinks } from "@/components/filters/period-links";
@@ -17,6 +17,7 @@ import { formatDate, MONTHS_SHORT } from "@/lib/dates";
 import { D, formatMoney, formatQty } from "@/lib/money";
 import { resolvePeriod } from "@/lib/periods";
 import { getRecentBills } from "@/lib/queries/bills";
+import { getCashFlowSummary, getCashPosition } from "@/lib/queries/cash";
 import { getMonthlyProfit, getPartyPositions, getPeriodSummary, getTopParties } from "@/lib/queries/reports";
 import { getSalesMonthly, getSalesOverview, getSalesPeriodSummary, getTopDueCustomers } from "@/lib/queries/sales";
 import { requestToday } from "@/lib/request";
@@ -57,6 +58,7 @@ function DashboardSkeleton() {
       <StatSkeleton count={4} />
       <StatSkeleton count={4} />
       <StatSkeleton count={4} />
+      <StatSkeleton count={4} />
       <CardSkeleton />
       <TableSkeleton rows={6} />
     </div>
@@ -69,7 +71,7 @@ async function DashboardContent({ searchParams }: Pick<PageProps<"/">, "searchPa
   const period = resolvePeriod({ period: firstParam(sp.period), from: firstParam(sp.from), to: firstParam(sp.to) }, today);
   const year = Number(today.slice(0, 4));
 
-  const [summary, positions, monthly, recent, topParties, salesOverview, salesPeriod, salesMonthly, topDue] = await Promise.all([
+  const [summary, positions, monthly, recent, topParties, salesOverview, salesPeriod, salesMonthly, topDue, cash, cashFlow] = await Promise.all([
     getPeriodSummary({ from: period.from, to: period.to }),
     getPartyPositions(),
     getMonthlyProfit(year),
@@ -79,9 +81,12 @@ async function DashboardContent({ searchParams }: Pick<PageProps<"/">, "searchPa
     getSalesPeriodSummary({ from: period.from, to: period.to }),
     getSalesMonthly(year),
     getTopDueCustomers(5),
+    getCashPosition(),
+    getCashFlowSummary({ from: period.from, to: period.to }),
   ]);
 
   const profit = D(summary.profit);
+  const cashInHand = D(cash.cashInHand);
 
   return (
     <div className="space-y-6">
@@ -91,6 +96,27 @@ async function DashboardContent({ searchParams }: Pick<PageProps<"/">, "searchPa
         </p>
         <PeriodLinks basePath="/" active={period.key} />
       </div>
+
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Cash · nakdi</h2>
+          <Link href="/cash" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">
+            Cash book <ArrowRight className="size-4" />
+          </Link>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatTile
+            label="Cash in hand"
+            value={formatMoney(cash.cashInHand)}
+            hint={cash.hasOpening ? "Physical cash right now · all entries to date" : "Add an opening cash entry on the Cash page to match your cash box"}
+            icon={<Wallet />}
+            tone={cashInHand.isNegative() ? "danger" : "success"}
+          />
+          <StatTile label="Bank & digital" value={formatMoney(cash.bankAndDigital)} hint={`Total funds ${formatMoney(cash.total)}`} icon={<Landmark />} tone="info" />
+          <StatTile label="Cash in" value={formatMoney(cashFlow.cashIn)} hint={`Received from customers & suppliers · ${period.label}`} icon={<ArrowDownLeft />} tone="success" />
+          <StatTile label="Cash out" value={formatMoney(cashFlow.cashOut)} hint={`Payments, advances & expenses · ${period.label}`} icon={<ArrowUpRight />} tone="danger" />
+        </div>
+      </section>
 
       <section>
         <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Purchases · supplier pattis</h2>

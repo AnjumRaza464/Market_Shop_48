@@ -1,4 +1,4 @@
-import type { BillStatus, ExpenseCategory, PaymentMode, TransactionType } from "@/db/schema";
+import type { BillStatus, CashEntryType, ExpenseCategory, PaymentMode, TransactionType } from "@/db/schema";
 
 export const SHOP = {
   name: process.env.NEXT_PUBLIC_SHOP_NAME?.trim() || "Market 48 Shop",
@@ -60,6 +60,44 @@ export const TRANSACTION_TYPES: { value: TransactionType; label: string; hint: s
   { value: "ADJUSTMENT", label: "Adjustment", hint: "Manual correction, discount or write-off" },
 ];
 export const MANUAL_TRANSACTION_TYPES = TRANSACTION_TYPES.filter((t) => t.value !== "BILL");
+
+/** Manual cash-book entry types. */
+export const CASH_ENTRY_TYPES: { value: CashEntryType; label: string; hint: string }[] = [
+  { value: "OPENING", label: "Opening cash", hint: "Cash counted when you started keeping the cash book" },
+  { value: "DEPOSIT", label: "Cash put in", hint: "Owner / partner put money into the shop" },
+  { value: "WITHDRAWAL", label: "Cash taken out", hint: "Owner / partner took money out of the shop" },
+  { value: "TRANSFER", label: "Transfer between accounts", hint: "e.g. cash deposited into the bank or withdrawn from it" },
+  { value: "ADJUSTMENT", label: "Adjustment", hint: "Counting difference or correction – you choose the side" },
+];
+export const CASH_ENTRY_TYPE_VALUES = CASH_ENTRY_TYPES.map((t) => t.value) as [CashEntryType, ...CashEntryType[]];
+
+/** Where a cash-book line came from (derived rows + manual entries). */
+export type CashSource =
+  | "CUSTOMER_RECEIPT"
+  | "PARTY_RECEIPT"
+  | "PARTY_PAYMENT"
+  | "PARTY_ADVANCE"
+  | "EXPENSE"
+  | "OPENING"
+  | "DEPOSIT"
+  | "WITHDRAWAL"
+  | "TRANSFER_OUT"
+  | "TRANSFER_IN"
+  | "ADJUSTMENT";
+export const CASH_SOURCES: { value: CashSource; label: string; side: "IN" | "OUT" | "BOTH" }[] = [
+  { value: "CUSTOMER_RECEIPT", label: "Received from customer", side: "IN" },
+  { value: "PARTY_RECEIPT", label: "Received from supplier", side: "IN" },
+  { value: "OPENING", label: "Opening cash", side: "IN" },
+  { value: "DEPOSIT", label: "Cash put in", side: "IN" },
+  { value: "TRANSFER_IN", label: "Transfer in", side: "IN" },
+  { value: "PARTY_PAYMENT", label: "Paid to supplier", side: "OUT" },
+  { value: "PARTY_ADVANCE", label: "Advance to supplier", side: "OUT" },
+  { value: "EXPENSE", label: "Shop expense", side: "OUT" },
+  { value: "WITHDRAWAL", label: "Cash taken out", side: "OUT" },
+  { value: "TRANSFER_OUT", label: "Transfer out", side: "OUT" },
+  { value: "ADJUSTMENT", label: "Adjustment", side: "BOTH" },
+];
+export const CASH_SOURCE_VALUES = CASH_SOURCES.map((s) => s.value) as [CashSource, ...CashSource[]];
 
 export const BILL_STATUSES: { value: BillStatus; label: string }[] = [
   { value: "PENDING", label: "Pending" },

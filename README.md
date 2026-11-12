@@ -7,7 +7,8 @@ Management system for a fruit & vegetable **commission (aarhat) shop** with two 
 * **Customer parties (maal dene wali parties)** – buyers you supply goods to on udhaar: one-row khata
   entries (goods given and/or cash received), running balances, dues, day/month/year reports.
 
-Plus shop expense tracking with partner settlement, and profit reports. The three reference
+Plus shop expense tracking with partner settlement, a **cash book (cash in hand)** derived from all of
+the above, and profit reports. The three reference
 spreadsheets the system was modelled on are in the project root (`FINAL----Fruit_Market_Ledger…`,
 `V-1-Khaata_Sheet…`, `V-1-Shop_Expense_Sheet…`); see section 3 for the mapping.
 
@@ -110,6 +111,7 @@ npm run dev          # http://localhost:3000
 |                                               | Party Ledger               | Customer khata with From–To, balance before period, running balance, print (`/customers/[id]`) |
 |                                               | Summary / Monthly          | Sales & Dues report (`/reports/sales`) – outstanding, top dues, day report, month-wise, year-wise, customer-wise period, item-wise |
 | Shop Expense Sheet                            | Daily Expenses             | Shop Expenses (`/expenses`) – category, amount, paid by (partner / cash box), mode, notes |
+| –                                             | Cash book (roznamcha)      | Cash in Hand (`/cash`) – running balance per account, period in/out by source, manual opening / deposit / withdrawal / transfer |
 |                                               | Monthly / Month-wise / Year-wise | Expenses page (period filters, totals, daily average, biggest category) + Expense Reports (`/reports/expenses`) |
 |                                               | Settings → Partners        | Partners (`/partners`) with share %; Partner settlement on expenses page and expense report |
 
@@ -164,6 +166,25 @@ payable) keeps the ledger consistent; the advance adjustment is shown on the pat
 | `CANCELLED` | no ledger entries                        | Restore, Delete                            |
 
 All bill writes (bill + line items + ledger entry) run inside one database transaction.
+
+### Cash in hand (cash book)
+
+Nothing is typed twice: the cash book (`/cash`) is a UNION of every money movement already
+recorded elsewhere, grouped by payment mode, so **cash in hand = the CASH mode balance**:
+
+| Movement                                  | Side | Source table                                |
+| ----------------------------------------- | ---- | ------------------------------------------- |
+| Received from a customer                  | In   | `sale_entries.received`                     |
+| Received from a supplier (RECEIPT)        | In   | `party_transactions.credit`                 |
+| Paid / advanced to a supplier             | Out  | `party_transactions.debit` (PAYMENT, ADVANCE – includes “Mark paid” on a patti) |
+| Shop expense paid from the cash box       | Out  | `shop_expenses` where `paid_by_partner_id IS NULL` |
+| Opening cash, deposits, withdrawals, transfers between accounts, adjustments | either | `cash_entries` (manual, entered on the Cash page) |
+
+Bank / JazzCash / Easypaisa / cheque movements are tracked the same way under their own mode, so
+the page also shows “Bank & digital” and a per-account breakdown. A **Transfer** entry moves money
+out of one account and into another (e.g. cash deposited at the bank). Start by recording an
+**Opening cash** entry so the balance matches the physical cash box; expenses a partner paid from
+their own pocket do not touch the shop's cash.
 
 ### Profit & loss
 

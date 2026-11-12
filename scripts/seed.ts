@@ -9,7 +9,8 @@
  *
  * Supplier side: 8 parties, ~11 months of bills (Jan–Nov 2026) with line items, payments, advances.
  * Customer side: 10 customers with goods-given / cash-received rows (Khaata sheet style).
- * Shop: monthly expenses, 2 partners (paid-by is assigned to existing expenses when partners are created).
+ * Shop: monthly expenses, 2 partners (paid-by is assigned to existing expenses when partners are created),
+ *       an opening cash entry so the cash book starts in the black.
  * Deterministic (seeded PRNG) so re-runs match.
  */
 import { eq, isNull, sql } from "drizzle-orm";
@@ -17,6 +18,7 @@ import { db } from "@/db";
 import {
   billItems,
   bills,
+  cashEntries,
   customers,
   parties,
   partners,
@@ -405,6 +407,17 @@ async function seedExpenses(tx: Tx) {
   console.log(`  ${expenseRows.length} expenses.`);
 }
 
+/** Opening cash + a bank transfer so the cash book has something to show. */
+async function seedCash(tx: Tx) {
+  console.log("Inserting cash entries…");
+  await tx.insert(cashEntries).values([
+    { entryDate: iso(YEAR, 1, 1), type: "OPENING", direction: "IN", amount: money(2_500_000), paymentMode: "CASH", notes: "Cash in hand on 1 Jan" },
+    { entryDate: iso(YEAR, 1, 1), type: "OPENING", direction: "IN", amount: money(800_000), paymentMode: "BANK", notes: "Bank balance on 1 Jan" },
+    { entryDate: iso(YEAR, 3, 15), type: "TRANSFER", direction: "OUT", amount: money(300_000), paymentMode: "CASH", toMode: "BANK", notes: "Cash deposited at bank" },
+  ]);
+  console.log("  3 cash entries.");
+}
+
 /** Creates the partners and assigns "paid by" to expenses that have none yet (≈ 60/40 like their shares, some from the cash box). */
 async function seedPartners(tx: Tx) {
   console.log("Inserting partners…");
@@ -434,7 +447,7 @@ async function main() {
   if (wipe) {
     console.log("Wiping ALL data (no demo data will be inserted)…");
     await db.execute(
-      sql`TRUNCATE TABLE bill_items, party_transactions, bills, sale_entries, customers, shop_expenses, partners, parties RESTART IDENTITY CASCADE`,
+      sql`TRUNCATE TABLE bill_items, party_transactions, bills, sale_entries, customers, shop_expenses, cash_entries, partners, parties RESTART IDENTITY CASCADE`,
     );
     const counts = await db.execute(sql`
       select (select count(*) from parties)::int as parties,
@@ -442,7 +455,8 @@ async function main() {
              (select count(*) from customers)::int as customers,
              (select count(*) from sale_entries)::int as entries,
              (select count(*) from shop_expenses)::int as expenses,
-             (select count(*) from partners)::int as partners
+             (select count(*) from partners)::int as partners,
+             (select count(*) from cash_entries)::int as cash_entries
     `);
     console.log("Row counts after wipe:", counts.rows[0]);
     console.log("Database is empty. Start entering your real parties, customers and expenses.");
@@ -453,7 +467,7 @@ async function main() {
     if (force) {
       console.log("Wiping ALL data…");
       await tx.execute(
-        sql`TRUNCATE TABLE bill_items, party_transactions, bills, sale_entries, customers, shop_expenses, partners, parties RESTART IDENTITY CASCADE`,
+        sql`TRUNCATE TABLE bill_items, party_transactions, bills, sale_entries, customers, shop_expenses, cash_entries, partners, parties RESTART IDENTITY CASCADE`,
       );
     }
     if (resetCustomers && !force) {
@@ -471,6 +485,7 @@ async function main() {
       customers: Number((await tx.select({ n: sql<number>`count(*)::int` }).from(customers))[0].n),
       expenses: Number((await tx.select({ n: sql<number>`count(*)::int` }).from(shopExpenses))[0].n),
       partners: Number((await tx.select({ n: sql<number>`count(*)::int` }).from(partners))[0].n),
+      cash: Number((await tx.select({ n: sql<number>`count(*)::int` }).from(cashEntries))[0].n),
     };
 
     let did = false;
@@ -490,6 +505,11 @@ async function main() {
       await seedPartners(tx);
       did = true;
     } else console.log(`Partners: ${counts.partners} already present – skipped.`);
+    // Demo cash only goes with a demo database: never drop an opening balance into real books.
+    if (counts.cash === 0 && (force || counts.parties === 0)) {
+      await seedCash(tx);
+      did = true;
+    } else console.log(`Cash entries: ${counts.cash === 0 ? "not seeded (database already has real parties)" : `${counts.cash} already present`} – skipped.`);
 
     if (!did) console.log("Nothing to seed. Use --force to wipe and re-seed everything.");
   });
